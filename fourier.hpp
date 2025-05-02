@@ -37,31 +37,17 @@ Fourier fourier_decomposition(const vector<int>& truth_table, int n) {
     for (int s = 0; s < (1 << n); ++s) {
         T coeff = 0.0;
         for (int x = 0; x < (1ll << n); ++x)
-            coeff += chi(s, x, n) * truth_table[x];
+            coeff += chi(s, x, n) * (truth_table[x] ? -1 : 1);
         coeff /= (1ll << n);
         result[s] = coeff;
     }
     return Fourier{result, n};
 }
 
-T evaluate_fourier(const Fourier& f, const string& point) {
+T evaluate_fourier(const Fourier& f, int x) {
     T result = 0.0;
-    for (int i = 0; i < f.nn; ++i) {
-
-    }
-    
-    for (const auto& [basis, coeff] : coeffs) {
-        // Вычисляем скалярное произведение базисной функции и точки
-        int parity = 0;
-        for (int i = 0; i < n; ++i) {
-            parity += (basis[i] - '0') * (point[i] - '0');
-        }
-        parity %= 2;
-        
-        // Умножаем на коэффициент и добавляем к результату
-        result += coeff * pow(-1, parity);
-    }
-    
+    for (int i = 0; i < f.nn; ++i)
+        result += f.coeffs[i] * chi(i, x, f.n);
     return result;
 }
 
