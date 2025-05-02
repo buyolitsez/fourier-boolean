@@ -1,0 +1,42 @@
+```gitignore
+# Ignore build directories
+cmake-build-*/
+
+# Ignore CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+CTestTestfile.cmake
+*.cmake
+
+# Ignore IDE-specific files
+.idea/
+*.iml
+
+# Ignore compiled object files and binaries
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.a
+*.lib
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+
+# Ignore user-specific files
+*.user
+*.user.*.json
+```
+
+Save this file as `.gitignore` in the root of your repository.
