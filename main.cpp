@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main() {
-    Fourier f = fourier_decomposition({0, 0, 0, 1}, 2);
-    print_all_values_fourier(f, "f");
+    Fourier f({0, 1, 1, 0}, 2, "f");
+    f.print_all_values_fourier();
     return 0;
 }
