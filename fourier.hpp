@@ -81,7 +81,7 @@ struct Fourier {
         printf("Энергия функции %s: %.4f\n", name.c_str(), energy());
     }
 
-    Fourier multiply(const Fourier& g) const {
+    Fourier MUL(const Fourier& g) const {
         if (n != g.n) {
             throw invalid_argument("Функции должны иметь одинаковую размерность");
         }
@@ -92,7 +92,7 @@ struct Fourier {
         return Fourier(truth_table, n, "(" + name + " * " + g.name + ")");
     }
 
-    Fourier convolution(const Fourier& g) const {
+    Fourier CONV(const Fourier& g) const {
         if (n != g.n) {
             throw invalid_argument("Функции должны иметь одинаковую размерность");
         }
@@ -101,5 +101,31 @@ struct Fourier {
             result.coeffs[i] *= g.coeffs[i];
         result.name = "(" + name + " ⊗ " + g.name + ")";
         return result;
+    }
+
+    Fourier AND(const Fourier& g) const {
+        if (n != g.n) {
+            throw invalid_argument("Функции должны иметь одинаковую размерность");
+        }
+        vector<bool> truth_table(nn);
+        for (int x = 0; x < nn; ++x) {
+            T value_f = evaluate_fourier(x);
+            T value_g = g.evaluate_fourier(x);
+            truth_table[x] = from_pm1_to_bin((1.0 + value_f + value_g - value_f * value_g) / 2.0);
+        }
+        return Fourier(truth_table, n, "(" + name + " ∧ " + g.name + ")");
+    }
+
+    Fourier OR(const Fourier& g) const {
+        if (n != g.n) {
+            throw invalid_argument("Функции должны иметь одинаковую размерность");
+        }
+        vector<bool> truth_table(nn);
+        for (int x = 0; x < nn; ++x) {
+            T value_f = evaluate_fourier(x);
+            T value_g = g.evaluate_fourier(x);
+            truth_table[x] = from_pm1_to_bin((-1.0 + value_f + value_g + value_f * value_g) / 2.0);
+        }
+        return Fourier(truth_table, n, "(" + name + " ∨ " + g.name + ")");
     }
 };
