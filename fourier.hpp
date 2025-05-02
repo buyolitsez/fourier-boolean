@@ -92,4 +92,14 @@ struct Fourier {
         return Fourier(truth_table, n, "(" + name + " * " + g.name + ")");
     }
 
+    Fourier convolution(const Fourier& g) const {
+        if (n != g.n) {
+            throw invalid_argument("Функции должны иметь одинаковую размерность");
+        }
+        Fourier result = *this;
+        for (int i = 0; i < nn; ++i)
+            result.coeffs[i] *= g.coeffs[i];
+        result.name = "(" + name + " ⊗ " + g.name + ")";
+        return result;
+    }
 };
