@@ -60,4 +60,14 @@ struct Fourier {
                    name.c_str(), int_to_str(x, n).c_str(), value, coeffs[x]);
         }
     }
+
+    T energy() {
+        T result = 0;
+        for (int i = 0; i < nn; ++i)
+            result += coeffs[i] * coeffs[i] * __builtin_popcount(i);
+        return result;
+    }
+    void print_energy() {
+        printf("Энергия функции %s: %.4f\n", name.c_str(), energy());
+    }
 };
