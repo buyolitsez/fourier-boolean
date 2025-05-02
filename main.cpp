@@ -2,8 +2,13 @@
 #include <iostream>
 
 int main() {
-    Fourier f({0, 1, 1, 0}, 2, "f");
-    f.print_all_values_fourier();
-    f.print_energy();
+    vector<bool> truth_table_f = {0, 1, 1, 1, 1, 0, 1, 1};
+    Fourier f(truth_table_f, 3, "f");
+
+    vector<bool> truth_table_g = {0, 0, 0, 0, 1, 1, 1, 1};
+    Fourier g(truth_table_g, 3, "g");
+
+    Fourier h = f.multiply(g);
+    h.print_all_values_fourier();
     return 0;
 }
