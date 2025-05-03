@@ -31,17 +31,17 @@ Fourier build_and(const vector<int>& even_subsets, int l, int r, int n, int dept
         
         Fourier h = f1.AND(f2);
         if (l == 0) {
-            T energy1 = f1.energy();
-            T energy2 = f2.energy();
-            T energy = h.energy();
-            printf("Изменение энергии при l=%d, r=%d: %.8f, %.8f -> %.8f\n", l, r, energy1, energy2, energy, energy);
+            T energy1 = f1.measure();
+            T energy2 = f2.measure();
+            T energy = h.measure();
+            printf("Изменение меры при l=%d, r=%d: %.8f, %.8f -> %.8f, (want %.8f)\n", l, r, energy1, energy2, energy, (energy1 + energy2) / sqrt(2.0));
         }
         return h;
     }
 }
 
 void check_xor_16_dnf() {
-    const int n = 16;
+    const int n = 8;
     vector<int> even_subsets = generate_even_subsets(n);
     build_and(even_subsets, 0, even_subsets.size() - 1, n);
 }

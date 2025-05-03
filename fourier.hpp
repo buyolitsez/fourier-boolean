@@ -7,6 +7,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <cstdio>
+#include <cassert>
 
 using namespace std;
 
@@ -73,14 +74,23 @@ struct Fourier {
         }
     }
 
+    [[nodiscard]] T measure() const {
+        T result = 0;
+        for (int i = 0; i < nn; ++i) {
+            result += pow(fabs(coeffs[i]), 1.5) * __builtin_popcount(i);
+        }
+        return result;
+    }
+
     [[nodiscard]] T energy() const {
         T result = 0;
         for (int i = 0; i < nn; ++i)
             result += coeffs[i] * coeffs[i] * __builtin_popcount(i);
         return result;
     }
-    void print_energy() const {
-        printf("Энергия функции %s: %.4f\n", name.c_str(), energy());
+
+    void print_measure() const {
+        printf("Мера функции %s: %.4f\n", name.c_str(), measure());
     }
 
     Fourier MUL(const Fourier& g) const {
