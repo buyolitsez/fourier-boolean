@@ -4,4 +4,5 @@ project(mod3)
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(mod3 main.cpp
-        fourier.hpp)
+        fourier.hpp
+        check_xor_dnf.h)
