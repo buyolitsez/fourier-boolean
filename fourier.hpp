@@ -10,26 +10,27 @@
 #include <cassert>
 
 using namespace std;
+using T = double;
+using ULL = unsigned long long;
 
-string int_to_str(int x, int n) {
+string int_to_str(ULL x, int n) {
     string s(n, '0');
-    for (int i = 0; i < n; ++i)
+    for (ULL i = 0; i < n; ++i)
         s[i] = ((x >> i) & 1) ? '1' : '0';
     return s;
 }
 
-using T = double;
 
 struct Fourier {
     vector<T> coeffs;
     int n;
-    int nn = 1 << n;
+    ULL nn = 1ULL << n;
     string name;
 
-    static int chi(int s, int x, int n) {
+    static int chi(ULL s, ULL x, int n) {
         int result = 0;
         for (int i = 0; i < n; ++i)
-            result += ((s >> i) & 1) * ((x >> i) & 1);
+            result += ((s >> i) & 1ULL) * ((x >> i) & 1ULL);
         return (result % 2 == 0 ? 1 : -1);
     }
 
@@ -44,22 +45,22 @@ struct Fourier {
     }
 
     Fourier(const vector<bool>& truth_table, int n, string  name = "")
-        : n(n), nn(1ll << n), coeffs(1ll << n), name(std::move(name)) {
-        if (truth_table.size() != (1ll << n)) {
+        : n(n), nn(1Ull << n), coeffs(1Ull << n), name(std::move(name)) {
+        if (truth_table.size() != (1Ull << n)) {
             throw invalid_argument("Длина таблицы истинности должна быть равна 2^n");
         }
-        for (int s = 0; s < (1 << n); ++s) {
+        for (ULL s = 0; s < nn; ++s) {
             T coeff = 0.0;
-            for (int x = 0; x < (1ll << n); ++x)
-                coeff += chi(s, x, n) * from_bin_to_pm1(truth_table[x]);
-            coeff /= T(1ll << n);
+            for (ULL x = 0; x < nn; ++x)
+                coeff += chi(s, x, n) * truth_table[x];
+            coeff /= T(nn);
             coeffs[s] = coeff;
         }
     }
 
-    [[nodiscard]] T evaluate_fourier(int x) const {
+    [[nodiscard]] T evaluate_fourier(ULL x) const {
         T result = 0.0;
-        for (int i = 0; i < nn; ++i)
+        for (ULL i = 0; i < nn; ++i)
             result += coeffs[i] * chi(i, x, n);
         return result;
     }
@@ -67,24 +68,61 @@ struct Fourier {
     void print_all_values_fourier() const {
         printf("Значения функции %s в точках:\n", name.c_str());
 
-        for (int x = 0; x < nn; ++x) {
+        for (ULL x = 0; x < nn; ++x) {
             double value = evaluate_fourier(x);
             printf("%s(%s) = %.4f   Fourier: %.4f\n",
                    name.c_str(), int_to_str(x, n).c_str(), value, coeffs[x]);
         }
     }
 
+    // min k такое что сумма по |S| < k большая
     [[nodiscard]] T measure() const {
-        T result = 0;
-        for (int i = 0; i < nn; ++i) {
-            result += pow(fabs(coeffs[i]), 1.5) * __builtin_popcount(i);
+        T weight = 0;
+        T eps = 0.99;
+        for (ULL i = 0; i < nn; ++i)
+            weight += coeffs[i] * coeffs[i];
+        vector<T> sums(n + 1, 0);
+        for (ULL i = 0; i < nn; ++i) {
+            sums[__builtin_popcount(i)] += coeffs[i] * coeffs[i];
         }
-        return result;
+        T curr = 0;
+        for (int k = 0; k <= n; ++k) {
+            curr += sums[k];
+            if (weight * eps <=curr)
+                return k;
+        }
+        assert(false);
     }
+
+    /*
+     * Выбираем случайную переменную x_i, дальше выбираем S из распределения f^2_S кондишенд на том что i \in S и выдаем |S|
+     * если переменная не входит ни в один не нулевой f_S то 0
+     */
+//    [[nodiscard]] T measure() const {
+//        T result = 0;
+//        for (ULL i = 0; i < n; ++i) {
+//            T curr = 0;
+//            T sum = 0;
+//            for (ULL j = 0; j < nn; ++j) {
+//                if (j == 0 || ((j >> i) & 1))
+//                    sum += coeffs[j] * coeffs[j];
+//            }
+//            if (sum == 0)
+//                continue;
+//            for (ULL j = 0; j < nn; ++j) {
+//                if (j == 0 || ((j >> i) & 1))
+//                    curr += __builtin_popcount(j) * coeffs[j] * coeffs[j] / sum;
+//            }
+//
+//            result += curr / n;
+//        }
+//        return result;
+//        return 0;
+//    }
 
     [[nodiscard]] T energy() const {
         T result = 0;
-        for (int i = 0; i < nn; ++i)
+        for (ULL i = 0; i < nn; ++i)
             result += coeffs[i] * coeffs[i] * __builtin_popcount(i);
         return result;
     }
@@ -94,33 +132,30 @@ struct Fourier {
     }
 
     Fourier MUL(const Fourier& g) const {
-        if (n != g.n) {
+        if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
-        }
         vector<bool> truth_table(nn);
-        for (int x = 0; x < nn; ++x)
+        for (ULL x = 0; x < nn; ++x)
             truth_table[x] = from_pm1_to_bin(evaluate_fourier(x) * g.evaluate_fourier(x));
 
         return Fourier(truth_table, n, "(" + name + " * " + g.name + ")");
     }
 
     Fourier CONV(const Fourier& g) const {
-        if (n != g.n) {
+        if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
-        }
         Fourier result = *this;
-        for (int i = 0; i < nn; ++i)
+        for (ULL i = 0; i < nn; ++i)
             result.coeffs[i] *= g.coeffs[i];
         result.name = "(" + name + " ⊗ " + g.name + ")";
         return result;
     }
 
     Fourier AND(const Fourier& g) const {
-        if (n != g.n) {
+        if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
-        }
         vector<bool> truth_table(nn);
-        for (int x = 0; x < nn; ++x) {
+        for (ULL x = 0; x < nn; ++x) {
             T value_f = evaluate_fourier(x);
             T value_g = g.evaluate_fourier(x);
             truth_table[x] = from_pm1_to_bin((1.0 + value_f + value_g - value_f * value_g) / 2.0);
@@ -129,11 +164,10 @@ struct Fourier {
     }
 
     Fourier OR(const Fourier& g) const {
-        if (n != g.n) {
+        if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
-        }
         vector<bool> truth_table(nn);
-        for (int x = 0; x < nn; ++x) {
+        for (ULL x = 0; x < nn; ++x) {
             T value_f = evaluate_fourier(x);
             T value_g = g.evaluate_fourier(x);
             truth_table[x] = from_pm1_to_bin((-1.0 + value_f + value_g + value_f * value_g) / 2.0);

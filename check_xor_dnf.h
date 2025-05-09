@@ -40,8 +40,7 @@ Fourier build_and(const vector<int>& even_subsets, int l, int r, int n, int dept
     }
 }
 
-void check_xor_16_dnf() {
-    const int n = 8;
+void check_xor_dnf(int n) {
     vector<int> even_subsets = generate_even_subsets(n);
     build_and(even_subsets, 0, even_subsets.size() - 1, n);
 }
