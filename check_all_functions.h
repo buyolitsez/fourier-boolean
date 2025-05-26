@@ -20,7 +20,8 @@ void check_all_functions(int n) {
         functions.emplace_back(function, n, to_string(i));
     }
 
-    T mx = sqrt(2);
+    T mx = 1;
+    ULL skipped = 0;
     // Iterate through all pairs of functions
     for (ULL i = 0; i < functions.size(); ++i) {
         printf("i = %llu\n", i);
@@ -32,19 +33,20 @@ void check_all_functions(int n) {
             if (mx * max(mi, mj) < mh) {
                 mx = mh / max(mi, mj);
                 printf("i = %llu, mx = %.8f\n", i, mx);
-                printf("Нашел!\n");
-                printf("f = %s\n", functions[i].name.c_str());
-                functions[i].print_all_values_fourier();
-                functions[i].print_measure();
-                printf("g = %s\n", functions[j].name.c_str());
-                functions[j].print_all_values_fourier();
-                functions[j].print_measure();
-                printf("h = %s\n", h.name.c_str());
-                h.print_all_values_fourier();
-                h.print_measure();
-                return;
+//                printf("Нашел!\n");
+//                printf("f = %s\n", functions[i].name.c_str());
+//                functions[i].print_all_values_fourier();
+//                functions[i].print_measure();
+//                printf("g = %s\n", functions[j].name.c_str());
+//                functions[j].print_all_values_fourier();
+//                functions[j].print_measure();
+//                printf("h = %s\n", h.name.c_str());
+//                h.print_all_values_fourier();
+//                h.print_measure();
+//                return;
             }
         }
     }
-    printf("END");
+    printf("END\n");
+    printf("final mx = %.8f\n", mx);
 }

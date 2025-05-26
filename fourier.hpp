@@ -52,7 +52,8 @@ struct Fourier {
         for (ULL s = 0; s < nn; ++s) {
             T coeff = 0.0;
             for (ULL x = 0; x < nn; ++x)
-                coeff += chi(s, x, n) * truth_table[x];
+                coeff += chi(s, x, n) * from_bin_to_pm1(truth_table[x]); // -1, 1
+//                coeff += chi(s, x, n) * truth_table[x]; // 0, 1
             coeff /= T(nn);
             coeffs[s] = coeff;
         }
@@ -75,24 +76,31 @@ struct Fourier {
         }
     }
 
-    // min k такое что сумма по |S| < k большая
     [[nodiscard]] T measure() const {
-        T weight = 0;
-        T eps = 0.99;
-        for (ULL i = 0; i < nn; ++i)
-            weight += coeffs[i] * coeffs[i];
-        vector<T> sums(n + 1, 0);
-        for (ULL i = 0; i < nn; ++i) {
-            sums[__builtin_popcount(i)] += coeffs[i] * coeffs[i];
-        }
-        T curr = 0;
-        for (int k = 0; k <= n; ++k) {
-            curr += sums[k];
-            if (weight * eps <=curr)
-                return k;
-        }
-        assert(false);
+        T sum = 0;
+        for (int i = 1; i < nn; ++i)
+            sum += coeffs[i] * coeffs[i];
+        return energy() * energy() / sum;
     }
+
+//     min k такое что сумма по |S| < k большая
+//    [[nodiscard]] T measure() const {
+//        T weight = 0;
+//        T eps = 0.99;
+//        for (ULL i = 0; i < nn; ++i)
+//            weight += coeffs[i] * coeffs[i];
+//        vector<T> sums(n + 1, 0);
+//        for (ULL i = 0; i < nn; ++i) {
+//            sums[__builtin_popcount(i)] += coeffs[i] * coeffs[i];
+//        }
+//        T curr = 0;
+//        for (int k = 0; k <= n; ++k) {
+//            curr += sums[k];
+//            if (weight * eps <=curr)
+//                return k;
+//        }
+//        assert(false);
+//    }
 
     /*
      * Выбираем случайную переменную x_i, дальше выбираем S из распределения f^2_S кондишенд на том что i \in S и выдаем |S|
@@ -158,7 +166,8 @@ struct Fourier {
         for (ULL x = 0; x < nn; ++x) {
             T value_f = evaluate_fourier(x);
             T value_g = g.evaluate_fourier(x);
-            truth_table[x] = from_pm1_to_bin((1.0 + value_f + value_g - value_f * value_g) / 2.0);
+//            truth_table[x] = value_f * value_g; // 0, 1
+            truth_table[x] = from_pm1_to_bin((1.0 + value_f + value_g - value_f * value_g) / 2.0); // -1, 1
         }
         return Fourier(truth_table, n, "(" + name + " ∧ " + g.name + ")");
     }
@@ -170,8 +179,22 @@ struct Fourier {
         for (ULL x = 0; x < nn; ++x) {
             T value_f = evaluate_fourier(x);
             T value_g = g.evaluate_fourier(x);
-            truth_table[x] = from_pm1_to_bin((-1.0 + value_f + value_g + value_f * value_g) / 2.0);
+//            truth_table[x] = value_f + value_g - value_f * value_g; // 0, 1
+            truth_table[x] = from_pm1_to_bin((-1.0 + value_f + value_g + value_f * value_g) / 2.0); // -1, 1
         }
         return Fourier(truth_table, n, "(" + name + " ∨ " + g.name + ")");
+    }
+
+    Fourier XOR(const Fourier& g) const {
+        if (n != g.n)
+            throw invalid_argument("Функции должны иметь одинаковую размерность");
+        vector<bool> truth_table(nn);
+        for (ULL x = 0; x < nn; ++x) {
+            T value_f = evaluate_fourier(x);
+            T value_g = g.evaluate_fourier(x);
+            truth_table[x] = value_f * value_g; // -1, 1
+//            truth_table[x] = value_f + value_g - 2 * value_f * value_g; // 0, 1
+        }
+        return Fourier(truth_table, n, "(" + name + " ⊕ " + g.name + ")");
     }
 };
