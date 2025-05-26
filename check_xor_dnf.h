@@ -7,6 +7,7 @@
 
 using namespace std;
 
+
 vector<int> generate_even_subsets(int n) {
     vector<int> result;
     for (int bits = 0; bits < (1ll << n); ++bits) {

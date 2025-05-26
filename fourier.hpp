@@ -76,12 +76,9 @@ struct Fourier {
         }
     }
 
-    [[nodiscard]] T measure() const {
-        T sum = 0;
-        for (int i = 1; i < nn; ++i)
-            sum += coeffs[i] * coeffs[i];
-        return energy() * energy() / sum;
-    }
+//    [[nodiscard]] T measure() const {
+//        return energy();
+//    }
 
 //     min k такое что сумма по |S| < k большая
 //    [[nodiscard]] T measure() const {
@@ -106,27 +103,25 @@ struct Fourier {
      * Выбираем случайную переменную x_i, дальше выбираем S из распределения f^2_S кондишенд на том что i \in S и выдаем |S|
      * если переменная не входит ни в один не нулевой f_S то 0
      */
-//    [[nodiscard]] T measure() const {
-//        T result = 0;
-//        for (ULL i = 0; i < n; ++i) {
-//            T curr = 0;
-//            T sum = 0;
-//            for (ULL j = 0; j < nn; ++j) {
-//                if (j == 0 || ((j >> i) & 1))
-//                    sum += coeffs[j] * coeffs[j];
-//            }
-//            if (sum == 0)
-//                continue;
-//            for (ULL j = 0; j < nn; ++j) {
-//                if (j == 0 || ((j >> i) & 1))
-//                    curr += __builtin_popcount(j) * coeffs[j] * coeffs[j] / sum;
-//            }
-//
-//            result += curr / n;
-//        }
-//        return result;
-//        return 0;
-//    }
+    [[nodiscard]] T measure() const {
+        T result = 0;
+        for (ULL i = 0; i < n; ++i) {
+            T curr = 0;
+            T sum = 0;
+            for (ULL j = 0; j < nn; ++j) {
+                if (((j >> i) & 1)) {
+                    sum += coeffs[j] * coeffs[j];
+                    curr += __builtin_popcount(j) * coeffs[j] * coeffs[j];
+                }
+            }
+            if (sum == 0)
+                continue;
+            result += (curr / sum) / n;
+        }
+//        return energy();
+        return sqrt(result * n) * energy();
+//        return result * energy();
+    }
 
     [[nodiscard]] T energy() const {
         T result = 0;

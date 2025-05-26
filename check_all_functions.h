@@ -2,51 +2,84 @@
 
 #include "fourier.hpp"
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 using namespace std;
 
-void check_all_functions(int n) {
-    // Number of possible functions is 2^(2^n)
-    ULL function_size = 1ULL << n;
-    ULL num_functions = 1ULL << (function_size);
-    vector<Fourier> functions;
+const int MAX_THREADS = 1;
 
-    // Generate all possible functions
-    for (size_t i = 0; i < num_functions; ++i) {
-        vector<bool> function(function_size);
-        for (size_t j = 0; j < function_size; ++j) {
-            function[j] = ((i >> j) & 1);
-        }
-        functions.emplace_back(function, n, to_string(i));
-    }
+void check_all_functions(int n, int default_mx, const vector<Fourier>& functions) {
 
-    T mx = 1;
-    ULL skipped = 0;
-    // Iterate through all pairs of functions
-    for (ULL i = 0; i < functions.size(); ++i) {
-        printf("i = %llu\n", i);
-        T mi = functions[i].measure();
-        for (size_t j = i + 1; j < functions.size(); ++j) {
-            T mj = functions[j].measure();
-            Fourier h = functions[i].AND(functions[j]);
-            T mh = h.measure();
-            if (mx * max(mi, mj) < mh) {
-                mx = mh / max(mi, mj);
-                printf("i = %llu, mx = %.8f\n", i, mx);
-//                printf("Нашел!\n");
-//                printf("f = %s\n", functions[i].name.c_str());
-//                functions[i].print_all_values_fourier();
-//                functions[i].print_measure();
-//                printf("g = %s\n", functions[j].name.c_str());
-//                functions[j].print_all_values_fourier();
-//                functions[j].print_measure();
-//                printf("h = %s\n", h.name.c_str());
-//                h.print_all_values_fourier();
-//                h.print_measure();
-//                return;
+    atomic<T> global_mx{static_cast<double>(default_mx)};
+    mutex print_mutex;
+
+    auto process_chunk = [&](ULL start_i, ULL end_i, int thread_id) {
+        T local_mx = default_mx;
+        ULL total_iterations = end_i - start_i;
+        ULL progress_step = max(1ULL, total_iterations / 10);
+        ULL next_progress = start_i + progress_step;
+        
+        for (ULL i = start_i; i < end_i; ++i) {
+            if (i >= next_progress) {
+                int progress_percent = ((i - start_i) * 100) / total_iterations;
+                {
+                    lock_guard<mutex> lock(print_mutex);
+                    printf("Thread %d: %d%% complete\n", thread_id, progress_percent);
+                }
+                next_progress += progress_step;
+            }
+            
+            T mi = functions[i].measure();
+            for (ULL j = i + 1; j < functions.size(); ++j) {
+                T mj = functions[j].measure();
+                Fourier h = functions[i].AND(functions[j]);
+                T mh = h.measure();
+                if (local_mx * max(mi, mj) < mh) {
+                    local_mx = mh / max(mi, mj);
+                    {
+                        lock_guard<mutex> lock(print_mutex);
+                        printf("Thread %d found new local max: i = %llu, j = %llu, mx = %.8f\n", thread_id, i, j, local_mx);
+//                        printf("Нашел!\n");
+//                        printf("f = %s\n", functions[i].name.c_str());
+//                        functions[i].print_all_values_fourier();
+//                        functions[i].print_measure();
+//                        printf("g = %s\n", functions[j].name.c_str());
+//                        functions[j].print_all_values_fourier();
+//                        functions[j].print_measure();
+//                        printf("h = %s\n", h.name.c_str());
+//                        h.print_all_values_fourier();
+//                        h.print_measure();
+                    }
+                }
             }
         }
+        // Update global maximum
+        T current_mx = global_mx.load();
+        while (local_mx > current_mx) {
+            if (global_mx.compare_exchange_weak(current_mx, local_mx)) {
+                break;
+            }
+        }
+    };
+
+    // Create and start threads
+    vector<thread> threads;
+    ULL num_functions = 1ULL << (1ULL << n);
+    ULL chunk_size = (num_functions + MAX_THREADS - 1) / MAX_THREADS;
+    
+    for (int t = 0; t < MAX_THREADS; ++t) {
+        ULL start_i = t * chunk_size;
+        ULL end_i = min(start_i + chunk_size, num_functions);
+        threads.emplace_back(process_chunk, start_i, end_i, t);
     }
+
+    // Wait for all threads to complete
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
     printf("END\n");
-    printf("final mx = %.8f\n", mx);
+    printf("final mx = %.8f\n", global_mx.load());
 }
