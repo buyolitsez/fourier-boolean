@@ -38,21 +38,21 @@ void check_all_functions(int n, int default_mx, const vector<Fourier>& functions
                 T mj = functions[j].measure();
                 Fourier h = functions[i].AND(functions[j]);
                 T mh = h.measure();
-                if (local_mx * max(mi, mj) < mh) {
-                    local_mx = mh / max(mi, mj);
-                    {
-                        lock_guard<mutex> lock(print_mutex);
-                        printf("Thread %d found new local max: i = %llu, j = %llu, mx = %.8f\n", thread_id, i, j, local_mx);
-//                        printf("Нашел!\n");
-//                        printf("f = %s\n", functions[i].name.c_str());
-//                        functions[i].print_all_values_fourier();
-//                        functions[i].print_measure();
-//                        printf("g = %s\n", functions[j].name.c_str());
-//                        functions[j].print_all_values_fourier();
-//                        functions[j].print_measure();
-//                        printf("h = %s\n", h.name.c_str());
-//                        h.print_all_values_fourier();
-//                        h.print_measure();
+                T candidate = mh / max(mi, mj);
+                if (candidate > local_mx) {
+                    T current_global = global_mx.load();
+                    if (candidate > current_global) {
+                        // Попытка обновить глобальный максимум
+                        while (candidate > current_global && !global_mx.compare_exchange_weak(current_global, candidate)) {
+                            // current_global обновится значением из global_mx, если compare_exchange_weak не сработал
+                        }
+                        if (candidate > current_global) {
+                            local_mx = candidate;
+                            lock_guard<mutex> lock(print_mutex);
+                            printf("Thread %d found new global max: i = %llu, j = %llu, mx = %.8f\n", thread_id, i, j, candidate);
+                        }
+                    } else {
+                        local_mx = candidate;
                     }
                 }
             }

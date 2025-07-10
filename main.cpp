@@ -1,3 +1,5 @@
+#define sqr(x) ((x) * (x))
+
 //#include "fourier.hpp"
 //#include "check_xor_dnf.h"
 #include "check_all_functions.h"
@@ -61,22 +63,14 @@ int main() {
 //    f.print_measure();
     int n = 4;
 //    return 0;
-    vector <Fourier> functions = generate_or_subsets(n);
+    vector <Fourier> functions = generate_all_functions(n);
     printf("Total functions: %llu\n", functions.size());
-    check_all_functions(n, 2, functions);
+    check_all_functions(n, 1.4, functions);
 
 return 0;
-//    Fourier f1 = generate_x_i(n, 0);
-//    Fourier f2 = generate_x_i(n, 1);
-//    for (int i = 2; i < n; ++i) {
-//        if (i % 2 == 0)
-//            f1 = f1.OR(generate_x_i(n, i));
-//        else
-//            f2 = f2.OR(generate_x_i(n, i));
-//    }
 
-    Fourier f1 = functions[127];
-    Fourier f2 = functions[43688];
+    Fourier f1 = functions[12595];
+    Fourier f2 = functions[43658];
     f1.print_all_values_fourier();
     f1.print_measure();
     printf("energy = %f\n", f1.energy());

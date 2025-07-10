@@ -77,6 +77,7 @@ struct Fourier {
     }
 
     [[nodiscard]] T measure() const {
+        return energy() / (1 - sqr(fabs(coeffs[0])));
         vector <T> influences(n, 0);
         for (ULL i = 0; i < nn; ++i) {
             for (int j = 0; j < n; ++j) {
@@ -93,7 +94,8 @@ struct Fourier {
         for (int j = 0; j < n; ++j) {
             m += influences[j] / sqrt(norm);
         }
-        return m * m * energy();
+//        printf("domain = %f\n", m * m);
+        return m * m * energy() / ((2 - fabs(coeffs[0]) * fabs(coeffs[0])));
     }
 
     [[nodiscard]] T energy() const {
