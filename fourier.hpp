@@ -93,7 +93,7 @@ struct Fourier {
         for (int j = 0; j < n; ++j) {
             m += influences[j] / sqrt(norm);
         }
-        return m * m * (1.0 - coeffs[0]);
+        return m * m * (1.0 - fabs(coeffs[0])) * (1.0 - fabs(coeffs[0]));
     }
 
     [[nodiscard]] T energy() const {

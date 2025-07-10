@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const int MAX_THREADS = 1;
+const int MAX_THREADS = 16;
 
 void check_all_functions(int n, int default_mx, const vector<Fourier>& functions) {
     printf("start checking, n = %d\n", n);
@@ -21,8 +21,9 @@ void check_all_functions(int n, int default_mx, const vector<Fourier>& functions
         ULL total_iterations = end_i - start_i;
         ULL progress_step = max(1ULL, total_iterations / 10);
         ULL next_progress = start_i + progress_step;
+        printf("Thread %d processing range [%llu, %llu)\n", thread_id, start_i, end_i);
         
-        for (ULL i = 0; i < end_i; ++i) {
+        for (ULL i = start_i; i < end_i; ++i) {
             if (i >= next_progress) {
                 ULL progress_percent = ((i - start_i) * 100) / total_iterations;
                 {
