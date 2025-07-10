@@ -8,9 +8,9 @@
 using namespace std;
 
 
-vector<int> generate_even_subsets(int n) {
-    vector<int> result;
-    for (int bits = 0; bits < (1ll << n); ++bits) {
+vector<ULL> generate_even_subsets(int n) {
+    vector<ULL> result;
+    for (ULL bits = 0; bits < (1ULL << n); ++bits) {
         if (__builtin_popcount(bits) % 2 == 0) {
             result.emplace_back(bits);
         }
@@ -18,10 +18,10 @@ vector<int> generate_even_subsets(int n) {
     return result;
 }
 
-Fourier build_and(const vector<int>& even_subsets, int l, int r, int n, int depth = 0) {
+Fourier build_and(const vector<ULL>& even_subsets, int l, int r, int n, int depth = 0) {
     if (l == r) {
         // OR of the subset
-        vector<bool> truth_table(1ll << n, 1);
+        vector<bool> truth_table(1ULL << n, 1);
         truth_table[even_subsets[l]] = 0;
         Fourier f(truth_table, n, to_string(l));
         return f;

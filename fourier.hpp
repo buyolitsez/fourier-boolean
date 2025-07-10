@@ -44,8 +44,8 @@ struct Fourier {
         return x < 0;
     }
 
-    Fourier(const vector<bool>& truth_table, int n, string  name = "")
-        : n(n), nn(1Ull << n), coeffs(1Ull << n), name(std::move(name)) {
+    Fourier(const vector<bool> &truth_table, int n, string name = "")
+            : n(n), nn(1Ull << n), coeffs(1Ull << n), name(std::move(name)) {
         if (truth_table.size() != (1Ull << n)) {
             throw invalid_argument("Длина таблицы истинности должна быть равна 2^n");
         }
@@ -76,51 +76,24 @@ struct Fourier {
         }
     }
 
-//    [[nodiscard]] T measure() const {
-//        return energy();
-//    }
-
-//     min k такое что сумма по |S| < k большая
-//    [[nodiscard]] T measure() const {
-//        T weight = 0;
-//        T eps = 0.99;
-//        for (ULL i = 0; i < nn; ++i)
-//            weight += coeffs[i] * coeffs[i];
-//        vector<T> sums(n + 1, 0);
-//        for (ULL i = 0; i < nn; ++i) {
-//            sums[__builtin_popcount(i)] += coeffs[i] * coeffs[i];
-//        }
-//        T curr = 0;
-//        for (int k = 0; k <= n; ++k) {
-//            curr += sums[k];
-//            if (weight * eps <=curr)
-//                return k;
-//        }
-//        assert(false);
-//    }
-
-    /*
-     * Выбираем случайную переменную x_i, дальше выбираем S из распределения f^2_S кондишенд на том что i \in S и выдаем |S|
-     * если переменная не входит ни в один не нулевой f_S то 0
-     */
     [[nodiscard]] T measure() const {
-        T result = 0;
-        for (ULL i = 0; i < n; ++i) {
-            T curr = 0;
-            T sum = 0;
-            for (ULL j = 0; j < nn; ++j) {
-                if (((j >> i) & 1)) {
-                    sum += coeffs[j] * coeffs[j];
-                    curr += __builtin_popcount(j) * coeffs[j] * coeffs[j];
-                }
+        vector <T> influences(n, 0);
+        for (ULL i = 0; i < nn; ++i) {
+            for (int j = 0; j < n; ++j) {
+                if ((i >> j) & 1)
+                    influences[j] += coeffs[i] * coeffs[i];
             }
-            if (sum == 0)
-                continue;
-            result += (curr / sum) / n;
         }
-//        return energy();
-        return sqrt(result * n) * energy();
-//        return result * energy();
+        T norm = 0;
+        for (int j = 0; j < n; ++j)
+            norm += influences[j] * influences[j];
+        if (norm == 0)
+            return 0;
+        T m = 0;
+        for (int j = 0; j < n; ++j) {
+            m += influences[j] / sqrt(norm);
+        }
+        return m * m * (1.0 - coeffs[0]);
     }
 
     [[nodiscard]] T energy() const {
@@ -134,7 +107,7 @@ struct Fourier {
         printf("Мера функции %s: %.4f\n", name.c_str(), measure());
     }
 
-    Fourier MUL(const Fourier& g) const {
+    Fourier MUL(const Fourier &g) const {
         if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
         vector<bool> truth_table(nn);
@@ -144,7 +117,7 @@ struct Fourier {
         return Fourier(truth_table, n, "(" + name + " * " + g.name + ")");
     }
 
-    Fourier CONV(const Fourier& g) const {
+    Fourier CONV(const Fourier &g) const {
         if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
         Fourier result = *this;
@@ -154,7 +127,7 @@ struct Fourier {
         return result;
     }
 
-    Fourier AND(const Fourier& g) const {
+    Fourier AND(const Fourier &g) const {
         if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
         vector<bool> truth_table(nn);
@@ -167,7 +140,7 @@ struct Fourier {
         return Fourier(truth_table, n, "(" + name + " ∧ " + g.name + ")");
     }
 
-    Fourier OR(const Fourier& g) const {
+    Fourier OR(const Fourier &g) const {
         if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
         vector<bool> truth_table(nn);
@@ -180,7 +153,7 @@ struct Fourier {
         return Fourier(truth_table, n, "(" + name + " ∨ " + g.name + ")");
     }
 
-    Fourier XOR(const Fourier& g) const {
+    Fourier XOR(const Fourier &g) const {
         if (n != g.n)
             throw invalid_argument("Функции должны иметь одинаковую размерность");
         vector<bool> truth_table(nn);

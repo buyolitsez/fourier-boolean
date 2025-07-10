@@ -11,6 +11,7 @@ using namespace std;
 const int MAX_THREADS = 1;
 
 void check_all_functions(int n, int default_mx, const vector<Fourier>& functions) {
+    printf("start checking, n = %d\n", n);
 
     atomic<T> global_mx{static_cast<double>(default_mx)};
     mutex print_mutex;
@@ -21,9 +22,9 @@ void check_all_functions(int n, int default_mx, const vector<Fourier>& functions
         ULL progress_step = max(1ULL, total_iterations / 10);
         ULL next_progress = start_i + progress_step;
         
-        for (ULL i = start_i; i < end_i; ++i) {
+        for (ULL i = 0; i < end_i; ++i) {
             if (i >= next_progress) {
-                int progress_percent = ((i - start_i) * 100) / total_iterations;
+                ULL progress_percent = ((i - start_i) * 100) / total_iterations;
                 {
                     lock_guard<mutex> lock(print_mutex);
                     printf("Thread %d: %d%% complete\n", thread_id, progress_percent);
@@ -66,7 +67,7 @@ void check_all_functions(int n, int default_mx, const vector<Fourier>& functions
 
     // Create and start threads
     vector<thread> threads;
-    ULL num_functions = 1ULL << (1ULL << n);
+    ULL num_functions = functions.size();
     ULL chunk_size = (num_functions + MAX_THREADS - 1) / MAX_THREADS;
     
     for (int t = 0; t < MAX_THREADS; ++t) {
