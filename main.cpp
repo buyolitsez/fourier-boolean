@@ -61,7 +61,8 @@ int main() {
 //    f.print_measure();
     int n = 4;
 //    return 0;
-    vector <Fourier> functions = generate_all_functions(n);
+    vector <Fourier> functions = generate_or_subsets(n);
+    printf("Total functions: %llu\n", functions.size());
     check_all_functions(n, 2, functions);
 
 return 0;
